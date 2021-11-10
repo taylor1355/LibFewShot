@@ -73,6 +73,11 @@ def get_local_time():
 
     return cur_time
 
+def move_to_device(tensor_or_tensor_list, device):
+    if isinstance(tensor_or_tensor_list, torch.Tensor):
+        return tensor_or_tensor_list.to(device)
+    else:
+        return [move_to_device(item, device) for item in tensor_or_tensor_list]
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
