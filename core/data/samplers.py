@@ -60,9 +60,6 @@ class DomainsSampler(Sampler):
                 idxes = self.idx_list[d.item()]
                 pos = torch.randperm(idxes.size(0))[: self.data_num]
                 batch.append(idxes[pos])
-            print(f'Batchlen: {len(batch)}')
-            print(f'Ep size: {self.episode_size}')
-            print(f'Way num: {self.way_num}')
             if len(batch) == self.episode_size * self.way_num:
                 batch = torch.stack(batch).reshape(-1)
                 yield batch
