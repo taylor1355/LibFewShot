@@ -37,8 +37,7 @@ def get_dataloader(config, mode, model_type):
     project_root = Path(__file__).parents[2] # 2 directories up from this file's directory
 
     # TODO: move hardcoded stuff like paths into configs
-    # TODO: separate into train/val/test splits!!! Only doing one split for now just to get stuff working
-    dataset_path = os.path.join(project_root, 'datasets/amazon_reviews/amazon_reviews.json')
+    dataset_path = os.path.join(project_root, f'datasets/amazon_reviews/amazon_reviews_{mode}.json')
     examples = json.load(open(dataset_path))
     tokenizer = AutoTokenizer.from_pretrained(config['backbone']['kwargs']['bert_model'], do_lower_case = True) # TODO: take in tokenizer instead of constructing here
     dataset = NLPDataset(examples, num_task=config['train_episode'], k_support=config['shot_num'], k_query=config['query_num'], tokenizer=tokenizer)
