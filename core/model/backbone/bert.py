@@ -5,11 +5,10 @@ from transformers import AutoModel
 
 class Bert(nn.Module):
 
-    def __init__(self, num_labels, bert_model):
+    def __init__(self, bert_model):
         super(Bert, self).__init__()
-        self.num_labels = num_labels
         self.bert_model = bert_model
-        self.model = AutoModel.from_pretrained(self.bert_model, num_labels=self.num_labels)
+        self.model = AutoModel.from_pretrained(self.bert_model)
 
     def forward(self, x):
         input_ids, attention_mask, segment_ids = zip(*x)

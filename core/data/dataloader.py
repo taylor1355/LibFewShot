@@ -8,10 +8,11 @@ from transformers import AutoTokenizer
 from core.data.dataset import GeneralDataset
 from core.data.nlp_dataset import NLPDataset
 from .collates import get_collate_function, get_augment_method
-from .samplers import DomainsSampler
+from .samplers import CategoriesSampler
 from ..utils import ModelType
 
 from pathlib import Path
+from os.path import join
 import os
 import json
 
@@ -37,20 +38,21 @@ def get_dataloader(config, mode, model_type):
     project_root = Path(__file__).parents[2] # 2 directories up from this file's directory
 
     # TODO: move hardcoded stuff like paths into configs
-    dataset_path = os.path.join(project_root, f'datasets/amazon_reviews/amazon_reviews_{mode}.json')
-    examples = json.load(open(dataset_path))
-    tokenizer = AutoTokenizer.from_pretrained(config['backbone']['kwargs']['bert_model'], do_lower_case = True) # TODO: take in tokenizer instead of constructing here
-    dataset = NLPDataset(examples, num_task=config['train_episode'], k_support=config['shot_num'], k_query=config['query_num'], tokenizer=tokenizer)
 
-    sampler = DomainsSampler(
-        domain_list=dataset.example_domain_indices,
-        domain_num=dataset.domain_num,
+    dataset_dir = join(project_root, 'datasets/amazon')
+    examples = json.load(open(join(dataset_dir, f'amazon_{mode}.json')))
+    labels = json.load(open(join(dataset_dir, 'labels.txt')))
+
+    tokenizer = AutoTokenizer.from_pretrained(config['backbone']['kwargs']['bert_model'], do_lower_case = True) # TODO: take in tokenizer instead of constructing here
+    dataset = NLPDataset(examples, labels, tokenizer)
+
+    sampler = CategoriesSampler(
+        example_labels=dataset.example_labels,
+        label_ids=dataset.labels,
         episode_size=config["episode_size"],
         episode_num=config["train_episode"] if mode == "train" else config["test_episode"],
         way_num=config["way_num"] if mode == "train" else config["test_way"],
-        data_num=config["shot_num"] + config["query_num"]
-        if mode == "train"
-        else config["test_shot"] + config["test_query"],
+        data_num=(config["shot_num"] + config["query_num"]) if mode == "train" else (config["test_shot"] + config["test_query"])
     )
     dataloader = DataLoader(
         dataset,

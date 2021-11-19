@@ -1,5 +1,4 @@
 backbone:
   name: Bert
   kwargs:
-    num_labels: 2
     bert_model: 'distilbert-base-uncased'
