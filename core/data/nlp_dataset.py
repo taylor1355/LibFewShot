@@ -8,7 +8,7 @@ import collections
 import random
 import json, pickle
 from torch.utils.data import TensorDataset
-from augmentations import eda, AugTransformer()
+from .augmentations import eda, AugTransformer
 
 class NLPDataset(Dataset):
 
@@ -19,8 +19,10 @@ class NLPDataset(Dataset):
         self.mode = mode
         
         if self.mode == "train":
+            print("Augmenting training data ...")
             self.aug_transformer = AugTransformer()
             self.augment()
+            print("Done")
 
         self.example_labels = [ex['label'] for ex in examples]
         self.labels = list(set(self.example_labels))
@@ -39,14 +41,14 @@ class NLPDataset(Dataset):
                     new_ex['text'] = aug.split()
                     self.examples.append(new_ex)
             if random.randint(0, 5) <= 1:
-                translated = aug_transformer.backtranslate(ex['raw'])
+                translated = self.aug_transformer.backtranslate(ex['raw'])
                 new_ex['raw'] = translated
                 new_ex['text'] = translated.split()
                 self.examples.append(new_ex)
             if random.randint(0, 5) == 0:
                 str_arr = ex['raw'].split()
                 snippet = " ".join(str_arr[:random.randint(0, len(str_arr)-1)])
-                gen_text = aug_transformer.generate(snippet, 10)
+                gen_text = self.aug_transformer.generate(snippet, 10)
                 new_ex['raw'] = gen_text
                 new_ex['text'] = gen_text.split()
                 self.examples.append(new_ex)
