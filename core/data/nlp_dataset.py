@@ -15,9 +15,9 @@ class NLPDataset(Dataset):
     def __init__(self, examples, labels, tokenizer, mode):
         self.examples = examples
         random.shuffle(self.examples)
-        
+
         self.mode = mode
-        
+
         if self.mode == "train":
             print("Augmenting training data ...")
             self.aug_transformer = AugTransformer()
@@ -35,7 +35,7 @@ class NLPDataset(Dataset):
             ex = self.examples[i]
             new_ex = ex
             if random.randint(0, 5) <= 1:
-                eda_exammples = eda(ex['raw'], alpha_sr=0.2, alpha_ri=0.2, alpha_rs=0.1, p_rd=0.1, num_aug=3) 
+                eda_exammples = eda(ex['raw'], alpha_sr=0.2, alpha_ri=0.2, alpha_rs=0.1, p_rd=0.1, num_aug=3)
                 for aug in eda_exammples: # Don't include original which is at last position
                     new_ex['raw'] = aug
                     new_ex['text'] = aug.split()
@@ -55,7 +55,7 @@ class NLPDataset(Dataset):
 
     def __getitem__(self, index):
         example = self.examples[index]
-        input_ids = self.tokenizer.encode(example['raw'][:self.max_seq_length])
+        input_ids = self.tokenizer.encode(example['raw'][:self.max_seq_length], add_special_tokens=True)
         attention_mask = [1] * len(input_ids)
         segment_ids    = [0] * len(input_ids)
 

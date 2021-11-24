@@ -17,4 +17,4 @@ test_shot: 5
 test_query: 20
 episode_size: 1
 train_episode: 50
-test_episode: 10
+test_episode: 50

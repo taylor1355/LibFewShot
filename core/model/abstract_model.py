@@ -55,6 +55,11 @@ class AbstractModel(nn.Module):
         split features by episode and
         generate local targets + split labels by episode
         """
+        if isinstance(features, list): # Is NLP data structured like (n_batches, n_channels, feat_dim)
+            # n_channels refers to the number of equally sized input tensors. In the current case
+            # each input consists of a (input_ids, attention_mask, segment_ids) tuple, so n_channels=3
+            features = torch.stack([torch.stack(feat_channels) for feat_channels in features])
+
         episode_size = features.size(0) // (self.way_num * (self.shot_num + self.query_num))
         local_labels = (
             self._generate_local_targets(episode_size)
@@ -83,25 +88,24 @@ class AbstractModel(nn.Module):
             query_target = local_labels[:, :, self.shot_num :].reshape(
                 episode_size, self.way_num * self.query_num
             )
-        elif mode == 2:  # input 4D, return 5D(with episode) E.g.DN4
-            b, c, h, w = features.shape
+        elif mode == 2:  # input 3D, return 4D(with episode) E.g.DN4
+            b, c, d = features.shape # n_batches x n_channels x feat_dim
             features = features.contiguous().view(
                 episode_size,
                 self.way_num,
                 self.shot_num + self.query_num,
                 c,
-                h,
-                w,
+                d,
             )
             support_features = (
                 features[:, :, : self.shot_num, :, ...]
                 .contiguous()
-                .view(episode_size, self.way_num * self.shot_num, c, h, w)
+                .view(episode_size, self.way_num * self.shot_num, c, d)
             )
             query_features = (
                 features[:, :, self.shot_num :, :, ...]
                 .contiguous()
-                .view(episode_size, self.way_num * self.query_num, c, h, w)
+                .view(episode_size, self.way_num * self.query_num, c, d)
             )
             support_target = local_labels[:, :, : self.shot_num].reshape(
                 episode_size, self.way_num * self.shot_num

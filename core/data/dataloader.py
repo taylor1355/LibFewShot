@@ -43,7 +43,7 @@ def get_dataloader(config, mode, model_type):
     examples = json.load(open(join(dataset_dir, f'amazon_{mode}.json')))
     labels = json.load(open(join(dataset_dir, 'labels.txt')))
 
-    tokenizer = AutoTokenizer.from_pretrained(config['backbone']['kwargs']['bert_model'], do_lower_case = True) # TODO: take in tokenizer instead of constructing here
+    tokenizer = AutoTokenizer.from_pretrained(config['backbone']['kwargs']['bert_model'], do_lower_case = True, add_special_tokens=True) # TODO: take in tokenizer instead of constructing here
     dataset = NLPDataset(examples, labels, tokenizer, mode)
 
     sampler = CategoriesSampler(

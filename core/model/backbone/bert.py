@@ -14,5 +14,6 @@ class Bert(nn.Module):
         input_ids, attention_mask, segment_ids = zip(*x)
         input_ids = torch.stack(input_ids)
         attention_mask = torch.stack(attention_mask)
-        # segment_ids = torch.stack(segment_ids)
-        return self.model(input_ids=input_ids, attention_mask=attention_mask)['last_hidden_state']#, token_type_ids=segment_ids)
+
+        last_hidden_state = self.model(input_ids=input_ids, attention_mask=attention_mask)['last_hidden_state']
+        return self.model.pooler(last_hidden_state)

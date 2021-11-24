@@ -1,4 +1,4 @@
 backbone:
   name: Bert
   kwargs:
-    bert_model: 'distilbert-base-uncased'
+    bert_model: 'prajjwal1/bert-tiny'

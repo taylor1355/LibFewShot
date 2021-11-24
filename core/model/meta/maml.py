@@ -21,7 +21,7 @@ Adapted from https://github.com/wyharveychen/CloserLookFewShot.
 import torch
 from torch import nn
 
-from core.utils import accuracy
+from core.utils import accuracy, move_to_device
 from .meta_model import MetaModel
 from ..backbone.utils import convert_maml_module
 
@@ -51,10 +51,10 @@ class MAML(MetaModel):
         return out2
 
     def set_forward(self, batch):
-        image, global_target = batch  # unused global_target
-        image = image.to(self.device)
+        images, global_target = batch  # unused global_target
+        images = move_to_device(images, self.device)
         support_image, query_image, support_target, query_target = self.split_by_episode(
-            image, mode=2
+            images, mode=2
         )
         episode_size, _, c, h, w = support_image.size()
 
@@ -75,17 +75,17 @@ class MAML(MetaModel):
         return output, acc
 
     def set_forward_loss(self, batch):
-        image, global_target = batch  # unused global_target
-        image = image.to(self.device)
+        images, global_target = batch  # unused global_target
+        images = move_to_device(images, self.device)
         support_image, query_image, support_target, query_target = self.split_by_episode(
-            image, mode=2
+            images, mode=2
         )
-        episode_size, _, c, h, w = support_image.size()
+        episode_size, _, c, d = support_image.size()
 
         output_list = []
         for i in range(episode_size):
-            episode_support_image = support_image[i].contiguous().reshape(-1, c, h, w)
-            episode_query_image = query_image[i].contiguous().reshape(-1, c, h, w)
+            episode_support_image = support_image[i].contiguous().reshape(-1, c, d)
+            episode_query_image = query_image[i].contiguous().reshape(-1, c, d)
             episode_support_target = support_target[i].reshape(-1)
             # episode_query_targets = query_targets[i].reshape(-1)
             self.set_forward_adaptation(episode_support_image, episode_support_target)
@@ -110,7 +110,7 @@ class MAML(MetaModel):
         for i in range(self.inner_param["iter"]):
             output = self.forward_output(support_set)
             loss = self.loss_func(output, support_target)
-            grad = torch.autograd.grad(loss, fast_parameters, create_graph=True)
+            grad = torch.autograd.grad(loss, fast_parameters, create_graph=True, allow_unused=True)
             fast_parameters = []
 
             for k, weight in enumerate(self.parameters()):

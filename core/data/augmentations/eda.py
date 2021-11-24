@@ -7,26 +7,26 @@ from random import shuffle
 random.seed(1)
 
 #stop words list
-stop_words = ['i', 'me', 'my', 'myself', 'we', 'our', 
-			'ours', 'ourselves', 'you', 'your', 'yours', 
-			'yourself', 'yourselves', 'he', 'him', 'his', 
-			'himself', 'she', 'her', 'hers', 'herself', 
-			'it', 'its', 'itself', 'they', 'them', 'their', 
-			'theirs', 'themselves', 'what', 'which', 'who', 
-			'whom', 'this', 'that', 'these', 'those', 'am', 
-			'is', 'are', 'was', 'were', 'be', 'been', 'being', 
+stop_words = ['i', 'me', 'my', 'myself', 'we', 'our',
+			'ours', 'ourselves', 'you', 'your', 'yours',
+			'yourself', 'yourselves', 'he', 'him', 'his',
+			'himself', 'she', 'her', 'hers', 'herself',
+			'it', 'its', 'itself', 'they', 'them', 'their',
+			'theirs', 'themselves', 'what', 'which', 'who',
+			'whom', 'this', 'that', 'these', 'those', 'am',
+			'is', 'are', 'was', 'were', 'be', 'been', 'being',
 			'have', 'has', 'had', 'having', 'do', 'does', 'did',
 			'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or',
-			'because', 'as', 'until', 'while', 'of', 'at', 
+			'because', 'as', 'until', 'while', 'of', 'at',
 			'by', 'for', 'with', 'about', 'against', 'between',
-			'into', 'through', 'during', 'before', 'after', 
+			'into', 'through', 'during', 'before', 'after',
 			'above', 'below', 'to', 'from', 'up', 'down', 'in',
-			'out', 'on', 'off', 'over', 'under', 'again', 
-			'further', 'then', 'once', 'here', 'there', 'when', 
-			'where', 'why', 'how', 'all', 'any', 'both', 'each', 
-			'few', 'more', 'most', 'other', 'some', 'such', 'no', 
-			'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 
-			'very', 's', 't', 'can', 'will', 'just', 'don', 
+			'out', 'on', 'off', 'over', 'under', 'again',
+			'further', 'then', 'once', 'here', 'there', 'when',
+			'where', 'why', 'how', 'all', 'any', 'both', 'each',
+			'few', 'more', 'most', 'other', 'some', 'such', 'no',
+			'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too',
+			'very', 's', 't', 'can', 'will', 'just', 'don',
 			'should', 'now', '']
 
 #cleaning up text
@@ -49,10 +49,10 @@ def get_only_chars(line):
             clean_line += ' '
 
     clean_line = re.sub(' +',' ',clean_line) #delete extra spaces
-    
+
     if len(clean_line) == 0:
         return clean_line
-    
+
     if clean_line[0] == ' ':
         clean_line = clean_line[1:]
     return clean_line
@@ -63,9 +63,9 @@ def get_only_chars(line):
 ########################################################################
 
 #for the first time you use wordnet
-#import nltk
-#nltk.download('wordnet')
-from nltk.corpus import wordnet 
+import nltk
+nltk.download('wordnet')
+from nltk.corpus import wordnet
 
 def synonym_replacement(words, n):
 	new_words = words.copy()
@@ -90,11 +90,11 @@ def synonym_replacement(words, n):
 
 def get_synonyms(word):
 	synonyms = set()
-	for syn in wordnet.synsets(word): 
-		for l in syn.lemmas(): 
+	for syn in wordnet.synsets(word):
+		for l in syn.lemmas():
 			synonym = l.name().replace("_", " ").replace("-", " ").lower()
 			synonym = "".join([char for char in synonym if char in ' qwertyuiopasdfghjklzxcvbnm'])
-			synonyms.add(synonym) 
+			synonyms.add(synonym)
 	if word in synonyms:
 		synonyms.remove(word)
 	return list(synonyms)
@@ -141,13 +141,13 @@ def swap_word(new_words):
 	random_idx_1 = random.randint(0, len(new_words)-1)
 	random_idx_2 = random_idx_1
 	counter = 0
-	
+
 	while random_idx_2 == random_idx_1:
 		random_idx_2 = random.randint(0, len(new_words)-1)
 		counter += 1
 		if counter > 3:
 			return new_words
-	new_words[random_idx_1], new_words[random_idx_2] = new_words[random_idx_2], new_words[random_idx_1] 
+	new_words[random_idx_1], new_words[random_idx_2] = new_words[random_idx_2], new_words[random_idx_1]
 	return new_words
 
 ########################################################################
@@ -165,8 +165,8 @@ def add_word(new_words):
 	synonyms = []
 	counter = 0
 	if len(new_words) == 0:
-		return    
-	        
+		return
+
 	while len(synonyms) < 1:
 		random_word = new_words[random.randint(0, len(new_words)-1)]
 		synonyms = get_synonyms(random_word)
@@ -182,12 +182,12 @@ def add_word(new_words):
 ########################################################################
 
 def eda(sentence, alpha_sr=0.1, alpha_ri=0.1, alpha_rs=0.1, p_rd=0.1, num_aug=9):
-	
+
 	sentence = get_only_chars(sentence)
 	words = sentence.split(' ')
 	words = [word for word in words if word != '']
 	num_words = len(words)
-	
+
 	augmented_sentences = []
 	num_new_per_technique = int(num_aug/4)+1
 
