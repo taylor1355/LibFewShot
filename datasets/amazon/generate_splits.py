@@ -8,6 +8,12 @@ dataset_dir = os.path.dirname(__file__)
 examples = []
 with open(join(dataset_dir, 'amazon.json')) as data_file:
     examples = [json.loads(line) for line in data_file]
+    for i, example in enumerate(examples):
+        example['id'] = i
+
+# overwrite original with added id field
+with open(join(dataset_dir, 'amazon.json'), 'w') as data_file:
+    json.dump(examples, data_file)
 
 labels = [
     'Amazon_Instant_Video',
