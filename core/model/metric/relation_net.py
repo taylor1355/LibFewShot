@@ -21,8 +21,9 @@ Adapted from https://github.com/floodsung/LearningToCompare_FSL.
 """
 import torch
 from torch import nn
+import torch.nn.functional as F
 
-from core.utils import accuracy
+from core.utils import accuracy, move_to_device
 from .metric_model import MetricModel
 
 
@@ -53,6 +54,28 @@ class RelationLayer(nn.Module):
         out = self.fc(out)
         return out
 
+# Referencing https://github.com/laohur/Learning-To-Compare-For-Text
+class RelationNLP(nn.Module):
+
+    def __init__(self, input_size, hidden_size):
+        super(RelationNetwork, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, 1)
+
+    def forward(self, a, b):  # 475*100  #valid 25*100
+
+        n_examples = a.size()[0] * a.size()[1]
+        a = a.reshape(n_examples, -1)
+        b = b.reshape(n_examples, -1)
+        cosine = F.cosine_similarity(a, b)
+        return cosine
+
+        # not converage
+        x = torch.cat((a, b), 1)
+        x = F.relu(self.fc1(x))  # hiddensize->hiddensize
+        x = F.sigmoid(self.fc2(x))  # hiddensize->scale
+        return x
+
 
 class RelationNet(MetricModel):
     def __init__(self, feat_dim=64, feat_height=3, feat_width=3, **kwargs):
@@ -65,15 +88,15 @@ class RelationNet(MetricModel):
 
     def set_forward(self, batch):
         """
-
+        
         :param batch:
         :return:
         """
-        image, global_target = batch
-        image = image.to(self.device)
+        images, global_targets = batch
+        images = move_to_device(images, self.device)
 
-        feat = self.emb_func(image)
-        support_feat, query_feat, support_target, query_target = self.split_by_episode(feat, mode=2)
+        feat = self.emb_func(images)
+        support_feat, query_feat, support_target, query_target = self.split_by_episode(feat, mode=1)
 
         relation_pair = self._calc_pairs(query_feat, support_feat)
         output = self.relation_layer(relation_pair).view(-1, self.way_num)
@@ -87,11 +110,11 @@ class RelationNet(MetricModel):
         :param batch:
         :return:
         """
-        image, global_target = batch
-        image = image.to(self.device)
+        images, global_target = batch
+        images = move_to_device(images, self.device)
 
-        feat = self.emb_func(image)
-        support_feat, query_feat, support_target, query_target = self.split_by_episode(feat, mode=2)
+        feat = self.emb_func(images)
+        support_feat, query_feat, support_target, query_target = self.split_by_episode(feat, mode=1)
 
         relation_pair = self._calc_pairs(query_feat, support_feat)
         output = self.relation_layer(relation_pair).view(-1, self.way_num)
@@ -107,6 +130,9 @@ class RelationNet(MetricModel):
         :param support_feat: (task_num, support_num * way_num, feat_dim, feat_width, feat_height)
         :return: query_num * way_num * way_num, feat_dim, feat_width, feat_height
         """
+        print(query_feat.size(), support_feat.size())
+        epsize, train_eps, d = query_feat.size()
+
         t, _, c, h, w = query_feat.size()
         # t, w, wq, c, h, w -> t, wq, w, c, h, w
         query_feat = query_feat.unsqueeze(1).repeat(1, self.way_num, 1, 1, 1, 1)

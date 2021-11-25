@@ -77,6 +77,7 @@ class ProtoNet(MetricModel):
         images = move_to_device(images, self.device)
         episode_size = len(images) // (self.way_num * (self.shot_num + self.query_num))
         feat = self.emb_func(images)
+        
         support_feat, query_feat, support_target, query_target = self.split_by_episode(feat, mode=1)
 
         output = self.proto_layer(

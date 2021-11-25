@@ -4,4 +4,4 @@ classifier:
     inner_param:
       lr: 1e-3
       iter: 10
-    feat_dim: 800
+    feat_dim: 196608

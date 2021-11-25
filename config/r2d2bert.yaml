@@ -1,0 +1,16 @@
+includes:
+  - headers/data.yaml
+  - headers/device.yaml
+  - headers/misc.yaml
+  - headers/model.yaml
+  - headers/optimizer.yaml
+  - classifiers/R2D2.yaml
+  - backbones/bert.yaml
+
+device_ids: 0
+way_num: 5
+shot_num: 5
+query_num: 10
+test_way: 5 # use ~ -> test_* = *_num
+test_shot: 5
+test_query: 20

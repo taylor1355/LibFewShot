@@ -3,7 +3,9 @@
 # Updates by Shivaen Ramshetty
 
 from eda import *
+from transformer_augments import AugTransformer
 import pandas as pd
+import random
 
 #arguments to be parsed from command line
 import argparse
@@ -59,27 +61,59 @@ if alpha_sr == alpha_ri == alpha_rs == alpha_rd == 0:
      ap.error('At least one alpha should be greater than zero')
 
 #generate more data with standard augmentation
-def gen_eda(train_orig, output_file, alpha_sr, alpha_ri, alpha_rs, alpha_rd, num_aug=9):
+def augment(train_orig, output_file, transformer, alpha_sr, alpha_ri, alpha_rs, alpha_rd, num_aug=9):
     
     data_df = pd.read_json(train_orig)
     out_df = pd.DataFrame()
      
     data = data_df.to_dict(orient='records')
-    print("generating augmentations for", len(data), "sentences")
+    num = len(data)
+    print("generating augmentations for", num, "sentences")
     
+    i = 0
     for row in data:
         sentence = row[text_id]
-        aug_sentences = eda(sentence, alpha_sr=alpha_sr, alpha_ri=alpha_ri, alpha_rs=alpha_rs, p_rd=alpha_rd, num_aug=num_aug)
-        for aug_sentence in aug_sentences:
-            aug_row = row
-            aug_row[text_id] = aug_sentence
-            out_df = out_df.append(aug_row, ignore_index=True)
+        
+        out_df = out_df.append(row, ignore_index=True)
+        
+        # eda
+#         if random.randint(0,4) <= 1:
+#         aug_sentences = eda(sentence, alpha_sr=alpha_sr, alpha_ri=alpha_ri, alpha_rs=alpha_rs, p_rd=alpha_rd, num_aug=num_aug)
+#         for aug_sentence in aug_sentences:
+#             aug_row = row
+#             aug_row[text_id] = aug_sentence
+#             aug_row['text'] = aug_sentence.split()
+#             out_df = out_df.append(aug_row, ignore_index=True)
+            
+        # backtranslation
+        if random.randint(0,4) == 1:
+            bt_row = row
+            translated = transformer.backtranslate(sentence)
+            bt_row[text_id] = translated
+            bt_row['text'] = translated.split()
+            out_df = out_df.append(bt_row, ignore_index=True)
+        
+#         # gpt-2 generated
+#         if random.randint(0,4) == 1:
+#         gen_row = row
+#         str_arr = sentence.split()
+#         snippet = " ".join(str_arr[:random.randint(len(str_arr)//2, len(str_arr)-1)])
+#         gen_text = transformer.generate(snippet, random.randint(10, 20))
+#         gen_row[text_id] = gen_text
+#         gen_row['text'] = gen_text.split()
+#         out_df = out_df.append(gen_row, ignore_index=True)
     
-    out_df.to_json(output_file)
-    print("generated augmented sentences with eda for " + train_orig + " to " + output_file + " with num_aug=" + str(num_aug))
+        i += 1
+        if i % 1000 == 0:
+            print(i)
+            out_df.to_json(f'amazon_backtranslate_{i}_train.json', orient='records')
+    
+    out_df.to_json(output_file, orient='records')
+    print("generated augmented sentences for " + train_orig + " to " + output_file)
 
 #main function
 if __name__ == "__main__":
-
+    
+    aug_transformer = AugTransformer()
     #generate augmented sentences and output into a new file
-    gen_eda(args.input, output, alpha_sr=alpha_sr, alpha_ri=alpha_ri, alpha_rs=alpha_rs, alpha_rd=alpha_rd, num_aug=num_aug)
+    augment(args.input, output, aug_transformer, alpha_sr=alpha_sr, alpha_ri=alpha_ri, alpha_rs=alpha_rs, alpha_rd=alpha_rd, num_aug=num_aug)

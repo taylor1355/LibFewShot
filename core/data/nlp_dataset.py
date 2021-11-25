@@ -8,50 +8,18 @@ import collections
 import random
 import json, pickle
 from torch.utils.data import TensorDataset
-from .augmentations import eda, AugTransformer
 
 class NLPDataset(Dataset):
 
-    def __init__(self, examples, labels, tokenizer, mode):
+    def __init__(self, examples, labels, tokenizer):
         self.examples = examples
         random.shuffle(self.examples)
-
-        self.mode = mode
-
-        if self.mode == "train":
-            print("Augmenting training data ...")
-            self.aug_transformer = AugTransformer()
-            self.augment()
-            print("Done")
 
         self.example_labels = [ex['label'] for ex in examples]
         self.labels = list(set(self.example_labels))
 
         self.tokenizer = tokenizer
         self.max_seq_length = 256 # TODO: get this from the current model instead of hardcoding
-
-    def augment(self):
-        for i in range(len(self.examples)):
-            ex = self.examples[i]
-            new_ex = ex
-            if random.randint(0, 5) <= 1:
-                eda_exammples = eda(ex['raw'], alpha_sr=0.2, alpha_ri=0.2, alpha_rs=0.1, p_rd=0.1, num_aug=3)
-                for aug in eda_exammples: # Don't include original which is at last position
-                    new_ex['raw'] = aug
-                    new_ex['text'] = aug.split()
-                    self.examples.append(new_ex)
-            if random.randint(0, 5) <= 1:
-                translated = self.aug_transformer.backtranslate(ex['raw'])
-                new_ex['raw'] = translated
-                new_ex['text'] = translated.split()
-                self.examples.append(new_ex)
-            if random.randint(0, 5) == 0:
-                str_arr = ex['raw'].split()
-                snippet = " ".join(str_arr[:random.randint(0, len(str_arr)-1)])
-                gen_text = self.aug_transformer.generate(snippet, 10)
-                new_ex['raw'] = gen_text
-                new_ex['text'] = gen_text.split()
-                self.examples.append(new_ex)
 
     def __getitem__(self, index):
         example = self.examples[index]

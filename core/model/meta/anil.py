@@ -17,7 +17,7 @@ https://arxiv.org/abs/1909.09157
 import torch
 from torch import nn
 
-from core.utils import accuracy
+from core.utils import accuracy, move_to_device
 from .meta_model import MetaModel
 from ..backbone.utils import convert_maml_module
 
@@ -45,10 +45,10 @@ class ANIL(MetaModel):
         convert_maml_module(self.classifier)
 
     def set_forward(self, batch):
-        image, global_target = batch
-        image = image.to(self.device)
+        images, global_target = batch
+        images = move_to_device(images, self.device)
 
-        feat = self.emb_func(image)
+        feat = self.emb_func(images)
         support_feat, query_feat, support_target, query_target = self.split_by_episode(feat, mode=1)
         episode_size = support_feat.size(0)
 
@@ -63,10 +63,10 @@ class ANIL(MetaModel):
         return output, acc
 
     def set_forward_loss(self, batch):
-        image, global_target = batch
-        image = image.to(self.device)
+        images, global_target = batch
+        images = move_to_device(images, self.device)
 
-        feat = self.emb_func(image)
+        feat = self.emb_func(images)
         support_feat, query_feat, support_target, query_target = self.split_by_episode(feat, mode=1)
         episode_size = support_feat.size(0)
 

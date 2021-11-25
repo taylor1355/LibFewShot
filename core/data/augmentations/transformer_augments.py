@@ -13,7 +13,7 @@ class AugTransformer():
             self.translator_en_to_de = pipeline("translation_en_to_de", model='t5-base')
 
             # German to English using Bert2Bert model
-            self.tokenizer_de_to_en = AutoTokenizer.from_pretrained("google/bert2bert_L-24_wmt_de_en", pad_token="<pad>", eos_token="</s>", bos_token="<s>")
+            self.tokenizer_de_to_en = AutoTokenizer.from_pretrained("google/bert2bert_L-24_wmt_de_en", unk_token="<unk>", pad_token="<pad>", eos_token="</s>", bos_token="<s>")
             self.model_de_to_en = AutoModelForSeq2SeqLM.from_pretrained("google/bert2bert_L-24_wmt_de_en")
         
     def backtranslate(self, sentence):
@@ -33,7 +33,7 @@ class AugTransformer():
     def generate(self, sentence, num_new_words):
         input_length = len(sentence.split())
         output_length = input_length + num_new_words
-        gpt_output = self.generator(sentence, max_length=output_length, num_return_sequences=5)
+        gpt_output = self.generator(sentence, max_length=output_length, num_return_sequences=1)
         augmented_text = gpt_output[0]['generated_text']
         
         return augmented_text

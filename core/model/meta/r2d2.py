@@ -18,7 +18,7 @@ Adapted from https://github.com/kjunelee/MetaOptNet.
 import torch
 from torch import nn
 
-from core.utils import accuracy
+from core.utils import accuracy, move_to_device
 from .meta_model import MetaModel
 
 
@@ -121,10 +121,10 @@ class R2D2(MetaModel):
         self._init_network()
 
     def set_forward(self, batch):
-        image, global_target = batch
-        image = image.to(self.device)
+        images, global_targets = batch
+        images = move_to_device(images, self.device)
 
-        feat = self.emb_func(image)
+        feat = self.emb_func(images)
         support_feat, query_feat, support_target, query_target = self.split_by_episode(feat, mode=1)
         output, weight = self.classifier(
             self.way_num, self.shot_num, query_feat, support_feat, support_target
@@ -135,10 +135,10 @@ class R2D2(MetaModel):
         return output, acc
 
     def set_forward_loss(self, batch):
-        image, global_target = batch
-        image = image.to(self.device)
+        images, global_targets = batch
+        images = move_to_device(images, self.device)
 
-        feat = self.emb_func(image)
+        feat = self.emb_func(images)
         support_feat, query_feat, support_target, query_target = self.split_by_episode(feat, mode=1)
         output, weight = self.classifier(
             self.way_num, self.shot_num, query_feat, support_feat, support_target
