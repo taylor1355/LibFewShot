@@ -33,7 +33,7 @@ class NLPDataset(Dataset):
     def augment(self):
         for i in range(len(self.examples)):
             ex = self.examples[i]
-            new_ex = ex
+            new_ex = ex.copy()
             if random.randint(0, 5) <= 1:
                 eda_exammples = eda(ex['raw'], alpha_sr=0.2, alpha_ri=0.2, alpha_rs=0.1, p_rd=0.1, num_aug=3)
                 for aug in eda_exammples: # Don't include original which is at last position
