@@ -1,6 +1,5 @@
-data_root: /data/wzy/miniImageNet--ravi
-image_size: 84
+data_root: datasets/amazon
+augmentation_file: amazon_eda_train.json
 use_memory: False
 augment: True
-augment_times: 1
-augment_times_query: 1
+max_temperature: 1

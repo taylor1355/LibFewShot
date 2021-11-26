@@ -67,6 +67,7 @@ class Trainer(object):
         experiment_begin = time()
         for epoch_idx in range(self.from_epoch + 1, self.config["epoch"]):
             print("============ Train on the train set ============")
+            self.train_loader.dataset.update_temperature(self.config["max_temperature"] * (epoch_idx - self.from_epoch - 1) / self.config["epoch"])
             train_acc = self._train(epoch_idx)
             print(" * Acc@1 {:.3f} ".format(train_acc))
             print("============ Validation on the val set ============")
@@ -89,6 +90,7 @@ class Trainer(object):
             self._save_model(epoch_idx, SaveType.LAST)
 
             self.scheduler.step()
+            print()
         print(
             "End of experiment, took {}".format(
                 str(datetime.timedelta(seconds=int(time() - experiment_begin)))
@@ -321,10 +323,10 @@ class Trainer(object):
         emb_func = get_instance(arch, "backbone", config)
         model_kwargs = {
             "way_num": config["way_num"],
-            "shot_num": config["shot_num"] * config["augment_times"],
+            "shot_num": config["shot_num"],
             "query_num": config["query_num"],
             "test_way": config["test_way"],
-            "test_shot": config["test_shot"] * config["augment_times"],
+            "test_shot": config["test_shot"],
             "test_query": config["test_query"],
             "emb_func": emb_func,
             "device": self.device,

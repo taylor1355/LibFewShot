@@ -11,19 +11,26 @@ from torch.utils.data import TensorDataset
 
 class NLPDataset(Dataset):
 
-    def __init__(self, examples, augmentations=None, labels, tokenizer, mode):
+    def __init__(self, examples, labels, tokenizer, augmentations=None):
         self.examples = examples
+        self.augmentations = [] if augmentations is None else augmentations
         random.shuffle(self.examples)
+        random.shuffle(self.augmentations)
 
-        self.mode = mode
+        self.temp = 0
+        self.num_used_augmentations = 0
 
-        self.aug_transformer = AugTransformer()
+        self.aug_transformer = None
 
         self.example_labels = [ex['label'] for ex in examples]
         self.labels = list(set(self.example_labels))
 
         self.tokenizer = tokenizer
-        self.max_seq_length = 256 # TODO: get this from the current model instead of hardcoding
+        self.max_seq_length = 256
+
+    def init_aug_transformer_if_needed():
+        if self.aug_transformer is None:
+            self.aug_transformer = AugTransformer()
 
     def augment(self):
         self.examples.extend(self.generate_augmentations(self.generate_augmentation_random))
@@ -32,9 +39,11 @@ class NLPDataset(Dataset):
         return eda(text, alpha_sr=0.2, alpha_ri=0.2, alpha_rs=0.1, p_rd=0.1, num_aug=3)
 
     def generate_backtranslate_augmentation(self, text):
+        self.init_aug_transformer_if_needed()
         return [self.aug_transformer.backtranslate(text)]
 
     def generate_gen_transformer_augmentation(self, text):
+        self.init_aug_transformer_if_needed()
         str_arr = text.split()
         snippet = " ".join(str_arr[:random.randint(0, len(str_arr)-1)])
         return [self.aug_transformer.generate(snippet, 10)]
@@ -61,8 +70,18 @@ class NLPDataset(Dataset):
                 augments.append(new_ex)
         return augments
 
+    def update_temperature(self, new_temp):
+        self.temp = new_temp
+        self.num_used_augmentations = int(self.temp * len(self.examples))
+        print(f'Temperature set to {new_temp}. Using {self.num_used_augmentations}/{len(self.augmentations)} augmentations.')
+
     def __getitem__(self, index):
-        example = self.examples[index]
+        if index < len(self.examples):
+            example = self.examples[index]
+        else:
+            index -= len(self.examples)
+            example = self.augmentations[index % len(self.augmentations)]
+
         input_ids = self.tokenizer.encode(example['raw'][:self.max_seq_length], add_special_tokens=True)
         attention_mask = [1] * len(input_ids)
         segment_ids    = [0] * len(input_ids)
@@ -82,4 +101,4 @@ class NLPDataset(Dataset):
         return (input_ids, attention_mask, segment_ids), label_id
 
     def __len__(self):
-        return len(self.examples)
+        return len(self.examples) + self.num_used_augmentations

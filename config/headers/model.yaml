@@ -1,4 +1,4 @@
-epoch: 50
+epoch: 25
 test_epoch: 5
 
 parallel_part:
