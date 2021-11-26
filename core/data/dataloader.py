@@ -41,7 +41,7 @@ def get_dataloader(config, mode, model_type):
 
     dataset_dir = join(project_root, 'datasets/amazon')
     if mode == "train":
-        examples = json.load(open(join(dataset_dir, f'amazon_eda_train.json')))
+        examples = json.load(open(join(dataset_dir, f'no_id/amazon_eda_train.json')))
     else:
         examples = json.load(open(join(dataset_dir, f'amazon_{mode}.json')))
     labels = json.load(open(join(dataset_dir, 'labels.txt')))

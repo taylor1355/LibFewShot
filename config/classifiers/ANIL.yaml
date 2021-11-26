@@ -2,6 +2,6 @@ classifier:
   name: ANIL
   kwargs:
     inner_param:
-      lr: 1e-3
+      lr: .1
       iter: 10
-    feat_dim: 196608
+    feat_dim: 128

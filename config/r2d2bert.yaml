@@ -14,3 +14,6 @@ query_num: 10
 test_way: 5 # use ~ -> test_* = *_num
 test_shot: 5
 test_query: 20
+episode_size: 1
+train_episode: 50
+test_episode: 50
