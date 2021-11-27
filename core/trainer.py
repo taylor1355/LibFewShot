@@ -10,7 +10,7 @@ from torch import nn
 
 from queue import Queue
 import core.model as arch
-from core.data import get_dataloader
+from core.data import get_dataloader, update_dataloader_temperature
 from core.utils import (
     AverageMeter,
     ModelType,
@@ -67,7 +67,8 @@ class Trainer(object):
         experiment_begin = time()
         for epoch_idx in range(self.from_epoch + 1, self.config["epoch"]):
             print("============ Train on the train set ============")
-            self.train_loader.dataset.update_temperature(self.config["max_temperature"] * (epoch_idx - self.from_epoch - 1) / self.config["epoch"])
+            new_temp = self.config["max_temperature"] * (epoch_idx - self.from_epoch - 1) / self.config["epoch"]
+            update_dataloader_temperature(self.train_loader, self.config, new_temp)
             train_acc = self._train(epoch_idx)
             print(" * Acc@1 {:.3f} ".format(train_acc))
             print("============ Validation on the val set ============")

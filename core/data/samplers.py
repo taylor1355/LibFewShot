@@ -35,12 +35,16 @@ class CategoriesSampler(Sampler):
         self.way_num = way_num
         self.data_num = data_num
 
+        self.use_new_example_list(example_labels, label_ids)
+
+    def use_new_example_list(self, example_labels, label_ids):
         example_labels = np.array(example_labels)
         self.idx_list = []
         for label_idx in label_ids:
             ind = np.argwhere(example_labels == label_idx).reshape(-1)
             ind = torch.from_numpy(ind)
             self.idx_list.append(ind)
+        print(f'idx_list len: {list([len(i) for i in self.idx_list])}')
 
     def __len__(self):
         return self.episode_num

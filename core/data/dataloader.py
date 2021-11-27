@@ -36,7 +36,6 @@ def get_dataloader(config, mode, model_type):
     # few shot tasks (ie batches of samples)
 
     project_root = Path(__file__).parents[2] # 2 directories up from this file's directory
-    # dataset_dir = join(project_root, 'datasets/amazon')
     dataset_dir = join(project_root, config['data_root'])
 
     examples = json.load(open(join(dataset_dir, f'amazon_{mode}.json')))
@@ -44,14 +43,13 @@ def get_dataloader(config, mode, model_type):
 
     augmentations = []
     if config['augment'] and mode == "train":
-        # augmentations = json.load(open(join(dataset_dir, 'amazon_eda_train.json')))
         augmentations = json.load(open(join(dataset_dir, config['augmentation_file'])))
 
     tokenizer = AutoTokenizer.from_pretrained(config['backbone']['kwargs']['bert_model'], do_lower_case = True) # TODO: take in tokenizer instead of constructing here
     dataset = NLPDataset(examples, labels, tokenizer, augmentations=augmentations)
 
     sampler = CategoriesSampler(
-        example_labels=dataset.example_labels,
+        example_labels=dataset.get_combined_example_labels(),
         label_ids=dataset.labels,
         episode_size=config["episode_size"],
         episode_num=config["train_episode"] if mode == "train" else config["test_episode"],
@@ -67,3 +65,10 @@ def get_dataloader(config, mode, model_type):
     )
 
     return dataloader
+
+def update_dataloader_temperature(dataloader, config, new_temp):
+    dataloader.dataset.update_temperature(new_temp)
+
+    example_labels = dataloader.dataset.get_combined_example_labels()
+    label_ids = dataloader.dataset.labels
+    dataloader.batch_sampler.use_new_example_list(example_labels, label_ids)

@@ -22,8 +22,9 @@ class NLPDataset(Dataset):
 
         self.aug_transformer = None
 
-        self.example_labels = [ex['label'] for ex in examples]
-        self.labels = list(set(self.example_labels))
+        self.example_labels = [ex['label'] for ex in self.examples]
+        self.augmentation_labels = [ex['label'] for ex in self.augmentations]
+        self.labels = list(set(self.example_labels + self.augmentation_labels))
 
         self.tokenizer = tokenizer
         self.max_seq_length = 256
@@ -70,17 +71,19 @@ class NLPDataset(Dataset):
                 augments.append(new_ex)
         return augments
 
+    def get_combined_example_labels(self):
+        return self.example_labels + self.augmentation_labels[:self.num_used_augmentations]
+
     def update_temperature(self, new_temp):
         self.temp = new_temp
-        self.num_used_augmentations = int(self.temp * len(self.examples))
+        self.num_used_augmentations = min(len(self.augmentations), int(self.temp * len(self.examples)))
         print(f'Temperature set to {new_temp}. Using {self.num_used_augmentations}/{len(self.augmentations)} augmentations.')
 
     def __getitem__(self, index):
         if index < len(self.examples):
             example = self.examples[index]
         else:
-            index -= len(self.examples)
-            example = self.augmentations[index % len(self.augmentations)]
+            example = self.augmentations[index - len(self.examples)]
 
         input_ids = self.tokenizer.encode(example['raw'][:self.max_seq_length], add_special_tokens=True)
         attention_mask = [1] * len(input_ids)
