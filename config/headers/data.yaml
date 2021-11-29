@@ -3,3 +3,4 @@ augmentation_file: amazon_eda_train.json
 use_memory: False
 augment: True
 max_temperature: 1
+min_temperature: 1
