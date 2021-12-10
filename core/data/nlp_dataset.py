@@ -11,11 +11,20 @@ from torch.utils.data import TensorDataset
 
 class NLPDataset(Dataset):
 
-    def __init__(self, examples, labels, tokenizer, augmentations=None):
+    def __init__(self, examples, labels, tokenizer, augmentations=None, one_to_one_augmentation=False):
         self.examples = examples
         self.augmentations = [] if augmentations is None else augmentations
         random.shuffle(self.examples)
         random.shuffle(self.augmentations)
+
+        self.one_to_one_augmentation = one_to_one_augmentation
+        if self.one_to_one_augmentation:
+            self.id_to_augmentation_map = {}
+            for ex in self.augmentations:
+                id = int(ex['id'])
+                if id not in self.id_to_augmentation_map:
+                    self.id_to_augmentation_map[id] = []
+                self.id_to_augmentation_map[id].append(ex)
 
         self.temp = 0
         self.num_used_augmentations = 0
@@ -75,16 +84,16 @@ class NLPDataset(Dataset):
         return self.example_labels + self.augmentation_labels[:self.num_used_augmentations]
 
     def update_temperature(self, new_temp):
+        if self.one_to_one_augmentation:
+            self.temp = 0
+            print('Keeping temperature at 0, since support set augmentation is enabled')
+            return
+
         self.temp = new_temp
         self.num_used_augmentations = min(len(self.augmentations), int(self.temp * len(self.examples)))
-        print(f'Temperature set to {new_temp}. Using {self.num_used_augmentations}/{len(self.augmentations)} augmentations.')
+        print(f'Temperature set to {new_temp}. Appending {self.num_used_augmentations}/{len(self.augmentations)} augmentations.')
 
-    def __getitem__(self, index):
-        if index < len(self.examples):
-            example = self.examples[index]
-        else:
-            example = self.augmentations[index - len(self.examples)]
-
+    def extract_example(self, example):
         input_ids = self.tokenizer.encode(example['raw'][:self.max_seq_length], add_special_tokens=True)
         attention_mask = [1] * len(input_ids)
         segment_ids    = [0] * len(input_ids)
@@ -100,6 +109,27 @@ class NLPDataset(Dataset):
         attention_mask = torch.Tensor(attention_mask).to(torch.long)
         segment_ids = torch.Tensor(segment_ids).to(torch.long)
         label_id = torch.Tensor([label_id]).to(torch.long)
+
+        return input_ids, attention_mask, segment_ids, label_id
+
+    def __getitem__(self, index):
+        if index < len(self.examples):
+            example = self.examples[index]
+        else:
+            example = self.augmentations[index - len(self.examples)]
+
+        input_ids, attention_mask, segment_ids, label_id = self.extract_example(example)
+
+        if self.one_to_one_augmentation:
+            id = int(example['id'])
+            if id in self.id_to_augmentation_map:
+                aug = np.random.choice(self.id_to_augmentation_map[id])
+                aug_input_ids, aug_attention_mask, aug_segment_ids, _ = self.extract_example(aug)
+            else:
+                aug_input_ids = input_ids.clone()
+                aug_attention_mask = attention_mask.clone()
+                aug_segment_ids = segment_ids.clone()
+            return (input_ids, attention_mask, segment_ids, aug_input_ids, aug_attention_mask, aug_segment_ids), label_id
 
         return (input_ids, attention_mask, segment_ids), label_id
 

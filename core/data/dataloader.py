@@ -42,11 +42,22 @@ def get_dataloader(config, mode, model_type):
     labels = json.load(open(join(dataset_dir, 'labels.txt')))
 
     augmentations = []
-    if config['augment'] and mode == "train":
-        augmentations = json.load(open(join(dataset_dir, config['augmentation_file'])))
+    one_to_one_augmentation=False
+    if config['augmentation']['enabled']:
+        augmentation_path = f'{join(dataset_dir, config["augmentation"]["file_prefix"])}_{mode}.json'
+        if config['augmentation']['type'] == 'append' and mode == 'train':
+            print('Using append augmentation mode. Augmentations will be appended according to temperature to training data.')
+            augmentations = json.load(open(augmentation_path))
+        elif config['augmentation']['type'] == 'replace' and mode == 'train':
+            print('Using replace augmentation mode. Training data will be replaced with augmentations.')
+            examples = json.load(open(augmentation_path))
+        elif config['augmentation']['type'] == 'support':
+            print('Using support augmentation mode. Examples in support sets of training, validation, and test data will be augmented with corresponding augmented versions.')
+            augmentations = json.load(open(augmentation_path))
+            one_to_one_augmentation = True
 
     tokenizer = AutoTokenizer.from_pretrained(config['backbone']['kwargs']['bert_model'], do_lower_case = True) # TODO: take in tokenizer instead of constructing here
-    dataset = NLPDataset(examples, labels, tokenizer, augmentations=augmentations)
+    dataset = NLPDataset(examples, labels, tokenizer, augmentations=augmentations, one_to_one_augmentation=one_to_one_augmentation)
 
     sampler = CategoriesSampler(
         example_labels=dataset.get_combined_example_labels(),

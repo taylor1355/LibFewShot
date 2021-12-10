@@ -68,7 +68,9 @@ class Trainer(object):
         for epoch_idx in range(self.from_epoch + 1, self.config["epoch"]):
             print("============ Train on the train set ============")
 
-            new_temp = self.config["min_temperature"] + (self.config["max_temperature"] - self.config["min_temperature"]) * (epoch_idx - self.from_epoch - 1) / self.config["epoch"]
+            min_temp = self.config["augmentation"]["min_temperature"]
+            max_temp = self.config["augmentation"]["max_temperature"]
+            new_temp = min_temp + (max_temp - min_temp) * (epoch_idx - self.from_epoch - 1) / self.config["epoch"]
             update_dataloader_temperature(self.train_loader, self.config, new_temp)
             train_acc = self._train(epoch_idx)
             print(" * Acc@1 {:.3f} ".format(train_acc))

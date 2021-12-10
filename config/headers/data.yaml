@@ -1,6 +1,8 @@
 data_root: datasets/amazon
-augmentation_file: amazon_eda_train.json
 use_memory: False
-augment: True
-max_temperature: 1
-min_temperature: 1
+augmentation:
+    file_prefix: amazon_backtranslate
+    enabled: True
+    type: support # append | replace | support
+    max_temperature: 1
+    min_temperature: 1
